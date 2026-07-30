@@ -15,6 +15,7 @@ _HEAD_BAD = (5.0, 23.0)
 _SHOULDERS_BAD = (25.0, 43.0)
 _TORSO_BAD = (45.0, 63.0)
 _ABSENT = (65.0, 68.0)
+_STANDING_FROM = 35.0
 
 
 def _base_landmarks() -> dict[str, Landmark]:
@@ -55,4 +56,15 @@ def demo_frame(now: float) -> PoseFrame | None:
         ):
             base = landmarks[name]
             landmarks[name] = Landmark(base.x + 0.08, base.y)
+    if now >= _STANDING_FROM:
+        landmarks = {
+            name: Landmark(
+                point.x,
+                point.y - 0.20,
+                point.z,
+                point.visibility,
+                point.presence,
+            )
+            for name, point in landmarks.items()
+        }
     return PoseFrame(landmarks=landmarks, captured_at=now)

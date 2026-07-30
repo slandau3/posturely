@@ -3,6 +3,8 @@ from __future__ import annotations
 import io
 from typing import Any
 
+from posturely.core.analysis import AnalysisSnapshot
+from posturely.core.mode import DeskMode
 from posturely.core.types import DiagnosticColor, MonitoringState, OutputState
 from posturely.demo_ui import run_visual_demo
 
@@ -14,10 +16,12 @@ class FakeFrame:
 class RecordingPreview:
     def __init__(self) -> None:
         self.states: list[OutputState] = []
+        self.snapshots: list[AnalysisSnapshot] = []
         self.closed = False
 
     def render(self, **kwargs: Any) -> int:
         self.states.append(kwargs["state"])
+        self.snapshots.append(kwargs["snapshot"])
         return -1
 
     def close(self) -> None:
@@ -53,6 +57,21 @@ def test_visual_demo_cycles_every_light_without_a_camera() -> None:
     monitoring = {state.monitoring for state in preview.states}
     assert MonitoringState.HEALTHY in monitoring
     assert MonitoringState.WAITING in monitoring
+    assert {snapshot.mode for snapshot in preview.snapshots} >= {
+        DeskMode.SEATED,
+        DeskMode.STANDING,
+    }
+    assert any(
+        snapshot.progress.head.next_transition_seconds == 1.0
+        for snapshot in preview.snapshots
+    )
+    assert all(
+        snapshot.state == state
+        for snapshot, state in zip(preview.snapshots, preview.states, strict=True)
+    )
+    assert all(
+        snapshot.evidence.head.magnitude >= 0.0 for snapshot in preview.snapshots
+    )
     assert preview.closed
 
 

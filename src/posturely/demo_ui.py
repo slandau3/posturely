@@ -52,7 +52,13 @@ def run_visual_demo(
                 state=state,
                 fps=speed / _SIMULATION_STEP_SECONDS,
                 mirror=mirror,
-                status_text=f"AUTOMATIC DEMO - {speed:g}x - no camera",
+                status_text=(
+                    f"AUTOMATIC DEMO - {speed:g}x - no camera - "
+                    f"{now:04.1f}/{seconds:g}s"
+                ),
+                snapshot=app.snapshot,
+                show_landmarks=True,
+                show_details=True,
             )
             if key in _QUIT_KEYS:
                 break

@@ -41,6 +41,18 @@ Posturely. Press `q` or Escape in the preview window to quit.
 
 If camera index `0` is not the desired webcam, try `--camera 1`.
 
+Live developer controls:
+
+- `c`: capture a five-second numeric calibration.
+- `1` / `2`: choose seated or standing when automatic mode is uncertain.
+- `x`, then `x` again within three seconds: clear calibration.
+- `l`: toggle landmarks.
+- `d`: toggle scores, reasons, and countdowns.
+- `q` or Escape: quit.
+
+Calibration is optional. It stores only median numeric posture features in the
+git-ignored `.posturely-calibration.json`; it never stores images or landmarks.
+
 Google's current MediaPipe Tasks privacy notice says the library sends API
 performance and utilization metrics (not input images) to Google. The macOS
 `private_launch` command above runs Posturely inside an operating-system
@@ -58,8 +70,10 @@ uv run posturely --demo
 
 It uses the real posture engine with a synthetic person, automatically cycles
 the head, shoulder, and torso lights through amber and red, then demonstrates
-absence/recovery. It runs at 10x speed, takes about seven seconds, and never
-opens the camera. Press `q` or Escape to quit early.
+seated/standing mode changes and absence/recovery. The developer overlay shows
+the live normalized score, evaluator reason, and countdown to amber or red for
+each category. It runs at 10x speed, takes about seven seconds, and never opens
+the camera. Press `q` or Escape to quit early.
 
 For text-only output without an OpenCV window:
 
@@ -93,9 +107,9 @@ with three tiny physical LEDs and no display.
 ## Current prototype limits
 
 - Generic thresholds still need real-desk tuning.
-- The optional numeric calibration engine exists, but its live keyboard/button
-  interaction is not yet connected.
-- Seated/standing mode selection and Raspberry Pi GPIO/CAD are later stages.
+- Automatic seated/standing selection is a coarse fixed-camera-view estimate.
+- Raspberry Pi GPIO, exact purchased-part dimensions, and physical validation
+  remain later stages.
 - Multi-person scenes are deliberately treated as uncertain.
 
 See the approved design in
