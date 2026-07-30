@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from time import monotonic
 
+from posturely.core.analysis import DiagnosticProgress, IssueProgress
 from posturely.core.types import (
     DiagnosticColor,
     Evidence,
@@ -74,6 +75,36 @@ class _IssueTimer:
             self.corrected_since += pause_duration
         self.uncertain_since = None
 
+    def progress(self, now: float) -> IssueProgress:
+        effective_now = self.uncertain_since if self.uncertain_since is not None else now
+        problematic = (
+            max(0.0, effective_now - self.problem_since)
+            if self.problem_since is not None
+            else 0.0
+        )
+        corrected = (
+            max(0.0, effective_now - self.corrected_since)
+            if self.corrected_since is not None
+            else 0.0
+        )
+        if self.corrected_since is not None:
+            next_transition = max(0.0, 2.0 - corrected)
+        elif self.problem_since is None or problematic < 5.0:
+            next_transition = (
+                max(0.0, 5.0 - problematic)
+                if self.problem_since is not None
+                else None
+            )
+        elif problematic < 15.0:
+            next_transition = max(0.0, 15.0 - problematic)
+        else:
+            next_transition = None
+        return IssueProgress(
+            problematic_seconds=problematic,
+            corrected_seconds=corrected,
+            next_transition_seconds=next_transition,
+        )
+
 
 class PostureStateMachine:
     """Maintain one independent alert timer for each diagnostic category."""
@@ -140,4 +171,13 @@ class PostureStateMachine:
             shoulders=self._shoulders.color,
             torso=self._torso.color,
             monitoring=monitoring,
+        )
+
+    def progress(self) -> DiagnosticProgress:
+        """Return a read-only view of current timers without advancing them."""
+        now = self._clock()
+        return DiagnosticProgress(
+            head=self._head.progress(now),
+            shoulders=self._shoulders.progress(now),
+            torso=self._torso.progress(now),
         )
