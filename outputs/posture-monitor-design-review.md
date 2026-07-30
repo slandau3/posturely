@@ -6,6 +6,7 @@ The approved, cost-first design specification is available here:
 
 Key prototype targets:
 
+- Prove the complete posture logic and virtual lights on this Mac before buying hardware
 - $104–150 in preferred parts before shipping and labor
 - Approximately $220–450 delivered after outsourced assembly
 - Raspberry Pi 5 1 GB with a generic $15–20 wide-angle camera

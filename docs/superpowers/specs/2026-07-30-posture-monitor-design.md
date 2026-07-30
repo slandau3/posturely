@@ -132,6 +132,30 @@ The software is a small local pipeline:
 
 Each unit has one responsibility and a narrow interface so camera, model, and LED hardware can be replaced independently.
 
+### 6.1 Mac-first proof mode
+
+Before purchasing prototype hardware, the same posture engine runs locally on Steve's Mac with:
+
+- A macOS camera adapter using the built-in camera or any temporarily connected webcam.
+- A simple developer preview that can display pose landmarks while tuning.
+- Three virtual diagnostic dots and one virtual monitoring indicator.
+- The real calibration, timing, confidence, and seated/standing behavior.
+- Frame writing disabled by default, exactly as it will be on the appliance.
+
+The Mac proof validates the usefulness of the posture rules and interaction before money is spent. Platform-specific code remains behind the camera and hardware-adapter boundaries so the posture engine and tests transfer unchanged to Raspberry Pi.
+
+The developer preview and landmark overlay are diagnostic tools only. They are not part of the final appliance experience and can be disabled entirely.
+
+Hardware procurement begins only after the Mac proof demonstrates:
+
+- Stable landmark extraction from sitting and standing positions.
+- At least five analyzed frames per second on the Mac.
+- Correct independent operation of all three virtual diagnostic dots.
+- Optional calibration and generic thresholds both function.
+- The forward-head and torso metrics are clearly useful.
+- The shoulder metric is promising enough to continue or is explicitly narrowed to shoulder imbalance/elevation.
+- No image or posture-history files are created.
+
 ## 7. Posture and Alert Behavior
 
 ### 7.1 Diagnostic timing
@@ -234,13 +258,14 @@ The builder receives:
 
 The builder must:
 
-1. Procure the preferred parts.
-2. Bench-test camera, model throughput, LEDs, button, and boot behavior before printing.
-3. Report any failed acceptance criterion before purchasing an upgrade.
-4. Confirm exact component dimensions and finalize the enclosure.
-5. Print and assemble the unit.
-6. Run the complete acceptance suite.
-7. Ship the assembled unit, one restorable SD-card image, and any unused proprietary cable or fastener.
+1. Confirm that the Mac-first proof gate has passed.
+2. Procure the preferred parts.
+3. Bench-test camera, model throughput, LEDs, button, and boot behavior before printing.
+4. Report any failed acceptance criterion before purchasing an upgrade.
+5. Confirm exact component dimensions and finalize the enclosure.
+6. Print and assemble the unit.
+7. Run the complete acceptance suite.
+8. Ship the assembled unit, one restorable SD-card image, and any unused proprietary cable or fastener.
 
 Target contractor labor is $100–300 once the design, code, and CAD are supplied. The expected delivered prototype total is approximately $220–450 before unusual shipping or rework.
 
