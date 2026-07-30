@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,13 +78,13 @@ class PostureEvidence:
     torso: Evidence
 
 
-class DiagnosticColor(str, Enum):
+class DiagnosticColor(StrEnum):
     OFF = "off"
     AMBER = "amber"
     RED = "red"
 
 
-class MonitoringState(str, Enum):
+class MonitoringState(StrEnum):
     HEALTHY = "healthy"
     WAITING = "waiting"
     FAULT = "fault"

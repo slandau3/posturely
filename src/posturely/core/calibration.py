@@ -7,7 +7,7 @@ import os
 import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from statistics import median
 from time import monotonic
@@ -15,7 +15,7 @@ from time import monotonic
 from posturely.core.types import PostureFeatures
 
 
-class CalibrationMode(str, Enum):
+class CalibrationMode(StrEnum):
     SEATED = "seated"
     STANDING = "standing"
 

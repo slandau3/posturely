@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Callable, Sequence
+from pathlib import Path
 from time import monotonic
 from time import sleep as _real_sleep
 from typing import TextIO
@@ -60,11 +61,21 @@ def main(
     clock: Callable[[], float] = monotonic,
     sleep: Callable[[float], None] = _real_sleep,
     out: TextIO | None = None,
+    live: Callable[[argparse.Namespace], int] | None = None,
 ) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
     if args.demo:
         return _run_demo(args.demo_seconds, clock=clock, sleep=sleep, out=out or sys.stdout)
-    return 0
+    if not args.model:
+        parser.error("--model is required for live camera monitoring")
+    if not Path(args.model).is_file():
+        parser.error(f"model file not found: {args.model}")
+    if live is None:
+        from posturely.live import run_live
+
+        live = run_live
+    return live(args)
 
 
 if __name__ == "__main__":
