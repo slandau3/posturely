@@ -11,8 +11,27 @@ import pytest
 from posturely.__main__ import main
 from posturely.adapters.mediapipe_pose import MediaPipePose, pose_frame_from_result
 from posturely.adapters.opencv_camera import OpenCVCamera
-from posturely.adapters.opencv_preview import OpenCVPreview, diagnostic_lights
-from posturely.core.types import DiagnosticColor, MonitoringState, OutputState
+from posturely.adapters.opencv_preview import (
+    OpenCVPreview,
+    diagnostic_lights,
+    diagnostic_rows,
+)
+from posturely.core.analysis import (
+    AnalysisSnapshot,
+    CalibrationPhase,
+    CalibrationStatus,
+    DiagnosticProgress,
+    IssueProgress,
+)
+from posturely.core.mode import DeskMode
+from posturely.core.types import (
+    DiagnosticColor,
+    Evidence,
+    MonitoringState,
+    OutputState,
+    PostureEvidence,
+    PostureFeatures,
+)
 
 
 def test_adapter_modules_import_without_native_libraries() -> None:
@@ -275,6 +294,94 @@ class TestDiagnosticLights:
         assert len(fake_cv2.circles) >= 3
         assert fake_cv2.shown
         assert fake_cv2.destroyed == ["Posturely"]
+
+
+def _snapshot(
+    *,
+    head_color: DiagnosticColor = DiagnosticColor.OFF,
+    problematic: bool = False,
+    confident: bool = True,
+    score: float = 0.2,
+    elapsed: float = 0.0,
+    next_transition: float | None = None,
+) -> AnalysisSnapshot:
+    head = Evidence(problematic, confident, score, "forward head proxy")
+    neutral = Evidence(False, True, 0.2, "acceptable")
+    return AnalysisSnapshot(
+        state=OutputState(
+            head=head_color,
+            shoulders=DiagnosticColor.OFF,
+            torso=DiagnosticColor.OFF,
+            monitoring=MonitoringState.HEALTHY,
+        ),
+        features=PostureFeatures(head=None, shoulders=None, torso=None),
+        evidence=PostureEvidence(head=head, shoulders=neutral, torso=neutral),
+        progress=DiagnosticProgress(
+            head=IssueProgress(elapsed, 0.0, next_transition),
+            shoulders=IssueProgress(0.0, 0.0, None),
+            torso=IssueProgress(0.0, 0.0, None),
+        ),
+        mode=DeskMode.SEATED,
+        baseline_mode=DeskMode.SEATED,
+        calibration=CalibrationStatus(
+            CalibrationPhase.IDLE,
+            None,
+            0.0,
+            "seated baseline active",
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("analysis", "status", "countdown"),
+    [
+        (_snapshot(), "OK", ""),
+        (
+            _snapshot(
+                problematic=True,
+                score=1.2,
+                elapsed=4.0,
+                next_transition=1.0,
+            ),
+            "checking",
+            "amber in 1.0s",
+        ),
+        (
+            _snapshot(
+                head_color=DiagnosticColor.AMBER,
+                problematic=True,
+                score=1.4,
+                elapsed=8.0,
+                next_transition=7.0,
+            ),
+            "5s warning",
+            "red in 7.0s",
+        ),
+        (
+            _snapshot(
+                head_color=DiagnosticColor.RED,
+                problematic=True,
+                score=1.8,
+                elapsed=16.0,
+            ),
+            "15s alert",
+            "",
+        ),
+        (_snapshot(confident=False, score=0.0), "uncertain", ""),
+    ],
+)
+def test_diagnostic_rows_explain_score_status_and_countdown(
+    analysis: AnalysisSnapshot,
+    status: str,
+    countdown: str,
+) -> None:
+    row = diagnostic_rows(analysis)[0]
+
+    assert row.label == "head"
+    assert row.score == analysis.evidence.head.magnitude
+    assert row.status == status
+    assert row.countdown == countdown
+    assert row.reason == analysis.evidence.head.reason
 
 
 def _recording_live(calls: list[object]) -> Callable[[object], int]:
