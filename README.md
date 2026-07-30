@@ -104,13 +104,38 @@ integration. `src/posturely/live.py` wires the camera path together, while
 The same core is intended to transfer to a low-cost Raspberry Pi appliance
 with three tiny physical LEDs and no display.
 
+## Raspberry Pi builder package
+
+After the software-simulation gate passed, Posturely gained a lazily loaded Pi
+LED adapter. A headless appliance launch adds `--pi-leds`:
+
+```bash
+posturely --camera 0 \
+  --model /opt/posturely/assets/models/pose_landmarker_lite.task \
+  --no-preview \
+  --pi-leds \
+  --calibration-file /var/lib/posturely/calibration.json
+```
+
+The builder handoff includes:
+
+- `hardware/bom.md`: cost-first parts and controlled camera fallback.
+- `hardware/wiring.md`: tested BCM pin mapping and resistor guidance.
+- `hardware/assembly.md`: provisioning, assembly, and acceptance checks.
+- `hardware/posturely-column.scad`: parameterized 180 mm slim-column concept.
+- `deploy/posturely.service`: restartable, restricted systemd template.
+
+Exact purchased-part measurements must be entered before exporting an STL.
+The Pi adapter and handoff consistency are tested without GPIO hardware; the
+physical build and its thermal/electrical acceptance tests remain unrun.
+
 ## Current prototype limits
 
 - Generic thresholds still need real-desk tuning.
 - Automatic seated/standing selection is a coarse fixed-camera-view estimate.
-- Raspberry Pi GPIO, exact purchased-part dimensions, and physical validation
-  remain later stages.
+- Rounded shoulders remain the least reliable monocular-camera metric.
+- Exact purchased-part fit, Raspberry Pi throughput, thermals, and physical
+  electrical validation remain unrun.
 - Multi-person scenes are deliberately treated as uncertain.
 
-See the approved design in
-`docs/superpowers/specs/2026-07-30-posture-monitor-design.md`.
+See the approved designs in `docs/superpowers/specs/`.
