@@ -1,2 +1,9 @@
 .superpowers/
 work/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+assets/models/
+.posturely-calibration.json
