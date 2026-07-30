@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from posturely.core.calibration import Baseline, CalibrationMode
 from posturely.core.evaluator import PostureEvaluator
 from posturely.core.types import (
     HeadFeatures,
@@ -116,3 +117,110 @@ def test_extreme_head_turn_is_uncertain_instead_of_bad_posture(
     assert not evidence.confident
     assert not evidence.problematic
     assert evidence.reason == "discontinuous head geometry"
+
+
+def calibrated_baseline() -> Baseline:
+    return Baseline(
+        mode=CalibrationMode.SEATED,
+        features={
+            "head.horizontal_offset": 0.20,
+            "head.neck_angle_degrees": 10.0,
+            "shoulders.line_angle_degrees": 3.0,
+            "shoulders.asymmetry": 0.05,
+            "shoulders.elbow_inset": 0.05,
+            "shoulders.width_to_torso": 0.70,
+            "torso.lean_degrees": 5.0,
+            "torso.compression": 1.60,
+        },
+        captured_at=1.0,
+    )
+
+
+def calibrated_features(**changes: float | None) -> PostureFeatures:
+    values: dict[str, float | None] = {
+        "head_offset": 0.20,
+        "neck_angle": 10.0,
+        "line_angle": 3.0,
+        "asymmetry": 0.05,
+        "elbow_inset": 0.05,
+        "width_to_torso": 0.70,
+        "lean": 5.0,
+        "compression": 1.60,
+    }
+    values.update(changes)
+    return PostureFeatures(
+        head=HeadFeatures(
+            horizontal_offset=float(values["head_offset"]),
+            neck_angle_degrees=float(values["neck_angle"]),
+        ),
+        shoulders=ShoulderFeatures(
+            line_angle_degrees=float(values["line_angle"]),
+            asymmetry=float(values["asymmetry"]),
+            elbow_inset=float(values["elbow_inset"]),
+            width_to_torso=values["width_to_torso"],
+        ),
+        torso=TorsoFeatures(
+            lean_degrees=float(values["lean"]),
+            compression=float(values["compression"]),
+        ),
+    )
+
+
+def test_calibrated_baseline_itself_is_acceptable() -> None:
+    result = PostureEvaluator().evaluate(
+        calibrated_features(),
+        baseline=calibrated_baseline(),
+    )
+
+    assert not result.head.problematic
+    assert not result.shoulders.problematic
+    assert not result.torso.problematic
+    assert result.head.magnitude == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize(
+    ("changes", "category"),
+    [
+        ({"head_offset": 0.41}, "head"),
+        ({"line_angle": 9.1}, "shoulders"),
+        ({"compression": 1.34}, "torso"),
+    ],
+)
+def test_calibrated_deltas_trigger_only_their_category(
+    changes: dict[str, float],
+    category: str,
+) -> None:
+    result = PostureEvaluator().evaluate(
+        calibrated_features(**changes),
+        baseline=calibrated_baseline(),
+    )
+
+    assert {
+        "head": result.head.problematic,
+        "shoulders": result.shoulders.problematic,
+        "torso": result.torso.problematic,
+    } == {
+        "head": category == "head",
+        "shoulders": category == "shoulders",
+        "torso": category == "torso",
+    }
+
+
+def test_calibrated_shoulders_allow_missing_optional_width_ratio() -> None:
+    result = PostureEvaluator().evaluate(
+        calibrated_features(width_to_torso=None),
+        baseline=calibrated_baseline(),
+    )
+
+    assert result.shoulders.confident
+    assert not result.shoulders.problematic
+
+
+def test_explicit_no_baseline_exactly_matches_generic_evaluation(
+    neutral_features: PostureFeatures,
+) -> None:
+    evaluator = PostureEvaluator()
+
+    assert evaluator.evaluate(neutral_features, baseline=None) == evaluator.evaluate(
+        neutral_features
+    )
