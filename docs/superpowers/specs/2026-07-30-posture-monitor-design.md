@@ -1,7 +1,7 @@
 # Cost-First Standalone Posture Monitor Design
 
 **Date:** 2026-07-30  
-**Status:** Approved design, awaiting written-spec review  
+**Status:** Approved; Mac software proof implemented and undergoing live tuning  
 **Owner:** Steve
 
 ## 1. Purpose
