@@ -45,6 +45,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="show pose landmarks in the preview",
     )
     parser.add_argument(
+        "--pi-leds",
+        action="store_true",
+        help="drive the Raspberry Pi prototype LEDs",
+    )
+    parser.add_argument(
         "--demo-seconds",
         type=float,
         default=70.0,

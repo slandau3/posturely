@@ -34,6 +34,7 @@ def test_parser_exposes_runtime_modes() -> None:
         "--calibration-file",
         "--details",
         "--landmarks",
+        "--pi-leds",
     ):
         assert flag in help_text
 
@@ -93,3 +94,4 @@ def test_live_options_default_to_local_calibration_and_visible_details() -> None
     assert args.calibration_file == ".posturely-calibration.json"
     assert args.details is True
     assert args.landmarks is True
+    assert args.pi_leds is False

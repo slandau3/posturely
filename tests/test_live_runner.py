@@ -77,6 +77,7 @@ def args(*, mirror: bool = True, no_preview: bool = False) -> argparse.Namespace
         calibration_file=".posturely-calibration.json",
         details=True,
         landmarks=True,
+        pi_leds=False,
     )
 
 
@@ -233,3 +234,38 @@ def test_live_keys_toggle_overlays_and_reach_application(tmp_path: Path) -> None
     assert preview.calls[-1]["fps"] > 0.0
     assert commands == [(ord("c"), 1.2)]
     assert camera.closed and pose.closed and preview.closed
+
+
+def test_pi_output_receives_snapshot_and_closes(tmp_path: Path) -> None:
+    camera = FakeCamera([object()])
+    pose = FakePose()
+    preview = FakePreview()
+
+    class FakeOutput:
+        applied: list[tuple[object, float]] = []
+        closed = False
+
+        def apply(self, snapshot: object, now: float) -> None:
+            self.applied.append((snapshot, now))
+
+        def close(self) -> None:
+            self.closed = True
+
+    output = FakeOutput()
+    runtime_args = args()
+    runtime_args.pi_leds = True
+    runtime_args.calibration_file = str(tmp_path / "calibration.json")
+
+    code = run_live(
+        runtime_args,
+        camera_factory=lambda _index: camera,
+        pose_factory=lambda _path: pose,
+        preview_factory=lambda: preview,
+        output_factory=lambda: output,
+        clock=lambda: 2.0,
+    )
+
+    assert code == 0
+    assert len(output.applied) == 1
+    assert output.applied[0][1] == 2.0
+    assert output.closed

@@ -39,6 +39,7 @@ def run_live(
     pose_factory: Callable[[str], Any] | None = None,
     preview_factory: Callable[[], Any] | None = None,
     app_factory: Callable[[CalibrationController], Any] | None = None,
+    output_factory: Callable[[], Any] | None = None,
     clock: Callable[[], float] = monotonic,
 ) -> int:
     """Run until q is pressed or a camera fault ends the stream."""
@@ -65,6 +66,15 @@ def run_live(
     show_landmarks = args.landmarks
     show_details = args.details
     with ExitStack() as stack:
+        if args.pi_leds:
+            if output_factory is None:
+                from posturely.adapters.pi_leds import PiLedOutput
+
+                output_factory = PiLedOutput
+            output = output_factory()
+            stack.callback(output.close)
+        else:
+            output = None
         camera = stack.enter_context(camera_factory(args.camera))
         if camera.fault is not None:
             return 1
@@ -84,6 +94,8 @@ def run_live(
             timestamp_ms = int(now * 1000)
             pose = pose_adapter.detect(frame, timestamp_ms)
             state = app.process(pose, now)
+            if output is not None:
+                output.apply(app.snapshot, now)
             if preview is not None:
                 key = preview.render(
                     frame=frame,

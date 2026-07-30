@@ -1,0 +1,20 @@
+[Unit]
+Description=Posturely private posture-light appliance
+After=local-fs.target
+
+[Service]
+Type=simple
+User=posturely
+WorkingDirectory=/opt/posturely
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/posturely/.venv/bin/posturely --camera 0 --model /opt/posturely/assets/models/pose_landmarker_lite.task --no-preview --pi-leds --calibration-file /var/lib/posturely/calibration.json
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/posturely
+
+[Install]
+WantedBy=multi-user.target
