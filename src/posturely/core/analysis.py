@@ -6,6 +6,11 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from posturely.core.mode import DeskMode
+from posturely.core.types import (
+    OutputState,
+    PostureEvidence,
+    PostureFeatures,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,3 +46,16 @@ class CalibrationStatus:
     mode: DeskMode | None
     progress: float
     message: str
+
+
+@dataclass(frozen=True, slots=True)
+class AnalysisSnapshot:
+    """Everything an output adapter may display for the current frame."""
+
+    state: OutputState
+    features: PostureFeatures
+    evidence: PostureEvidence
+    progress: DiagnosticProgress
+    mode: DeskMode
+    baseline_mode: DeskMode | None
+    calibration: CalibrationStatus
