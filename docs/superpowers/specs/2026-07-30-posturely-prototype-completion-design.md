@@ -1,7 +1,7 @@
 # Posturely Prototype Completion Design
 
 **Date:** 2026-07-30  
-**Status:** Approved direction; written design awaiting review  
+**Status:** Approved
 **Owner:** Steve
 
 ## 1. Outcome
@@ -11,6 +11,10 @@ builder-ready appliance package. The result must make the live classifier
 understandable, calibrate to a fixed desk setup without saving images, retain
 the quiet three-light product behavior, and transfer cleanly to a Raspberry Pi
 with physical LEDs.
+
+The software simulation is the first acceptance gate. Pi integration,
+electrical documentation, and enclosure work begin only after the complete
+camera-free simulation passes its automated and visual checks.
 
 This phase does not require Steve to perform another posture session. Automated
 landmark scenarios validate all software behavior. A future live desk check is
