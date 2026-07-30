@@ -31,6 +31,9 @@ def test_parser_exposes_runtime_modes() -> None:
         "--no-preview",
         "--demo-seconds",
         "--demo-speed",
+        "--calibration-file",
+        "--details",
+        "--landmarks",
     ):
         assert flag in help_text
 
@@ -82,3 +85,11 @@ def test_visual_demo_is_the_default_demo_experience() -> None:
     assert received is not None
     assert received.demo_seconds == 12
     assert received.demo_speed == 8
+
+
+def test_live_options_default_to_local_calibration_and_visible_details() -> None:
+    args = build_parser().parse_args([])
+
+    assert args.calibration_file == ".posturely-calibration.json"
+    assert args.details is True
+    assert args.landmarks is True

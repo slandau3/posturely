@@ -2,9 +2,17 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
+from pathlib import Path
+
+import pytest
 
 from posturely.adapters.demo_pose import demo_frame
-from posturely.live import run_live
+from posturely.core.types import (
+    DiagnosticColor,
+    MonitoringState,
+    OutputState,
+)
+from posturely.live import RollingFps, run_live
 
 
 class FakeCamera:
@@ -43,8 +51,9 @@ class FakePose:
 
 
 class FakePreview:
-    def __init__(self, key: int = ord("q")) -> None:
-        self.key = key
+    def __init__(self, key: int | list[int] | None = None) -> None:
+        key = ord("q") if key is None else key
+        self.keys = list(key) if isinstance(key, list) else [key]
         self.calls: list[dict[str, object]] = []
         self.closed = False
 
@@ -56,7 +65,7 @@ class FakePreview:
 
     def render(self, **kwargs: object) -> int:
         self.calls.append(kwargs)
-        return self.key
+        return self.keys.pop(0) if self.keys else ord("q")
 
 
 def args(*, mirror: bool = True, no_preview: bool = False) -> argparse.Namespace:
@@ -65,6 +74,9 @@ def args(*, mirror: bool = True, no_preview: bool = False) -> argparse.Namespace
         model="/tmp/fake.task",
         mirror=mirror,
         no_preview=no_preview,
+        calibration_file=".posturely-calibration.json",
+        details=True,
+        landmarks=True,
     )
 
 
@@ -156,3 +168,68 @@ def test_live_loop_returns_fault_without_starting_pose_or_preview() -> None:
     assert pose_calls == 0
     assert preview_calls == 0
     assert camera.closed
+
+
+def test_rolling_fps_becomes_nonzero_and_uses_bounded_timestamps() -> None:
+    fps = RollingFps()
+
+    assert fps.update(1.0) == 0.0
+    assert fps.update(1.1) == pytest.approx(10.0)
+    for index in range(2, 50):
+        value = fps.update(1.0 + index * 0.1)
+
+    assert value > 9.9
+    assert fps.sample_count == 30
+
+
+def test_live_keys_toggle_overlays_and_reach_application(tmp_path: Path) -> None:
+    frames = [object(), object(), object(), object()]
+    camera = FakeCamera(frames)
+    pose = FakePose()
+    preview = FakePreview([ord("l"), ord("d"), ord("c"), ord("q")])
+    commands: list[tuple[int, float]] = []
+
+    class FakeApp:
+        snapshot = object()
+
+        def process(self, _pose: object, _now: float) -> OutputState:
+            return OutputState(
+                DiagnosticColor.OFF,
+                DiagnosticColor.OFF,
+                DiagnosticColor.OFF,
+                MonitoringState.HEALTHY,
+            )
+
+        def handle_command(self, key: int, now: float) -> bool:
+            commands.append((key, now))
+            return True
+
+    runtime_args = args()
+    runtime_args.calibration_file = str(tmp_path / "calibration.json")
+    times = iter((1.0, 1.1, 1.2, 1.3))
+
+    code = run_live(
+        runtime_args,
+        camera_factory=lambda _index: camera,
+        pose_factory=lambda _path: pose,
+        preview_factory=lambda: preview,
+        app_factory=lambda _calibration: FakeApp(),
+        clock=lambda: next(times),
+    )
+
+    assert code == 0
+    assert [call["show_landmarks"] for call in preview.calls] == [
+        True,
+        False,
+        False,
+        False,
+    ]
+    assert [call["show_details"] for call in preview.calls] == [
+        True,
+        True,
+        False,
+        False,
+    ]
+    assert preview.calls[-1]["fps"] > 0.0
+    assert commands == [(ord("c"), 1.2)]
+    assert camera.closed and pose.closed and preview.closed

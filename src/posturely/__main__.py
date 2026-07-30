@@ -28,6 +28,23 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--mirror", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--no-preview", action="store_true", help="run without a video window")
     parser.add_argument(
+        "--calibration-file",
+        default=".posturely-calibration.json",
+        help="numeric-only local calibration file",
+    )
+    parser.add_argument(
+        "--details",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="show developer scores and countdowns",
+    )
+    parser.add_argument(
+        "--landmarks",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="show pose landmarks in the preview",
+    )
+    parser.add_argument(
         "--demo-seconds",
         type=float,
         default=70.0,
