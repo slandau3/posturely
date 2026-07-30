@@ -16,18 +16,20 @@ Posturely is implemented as a local Python 3.11 application with:
 
 The live app successfully opened camera index 0 after macOS Camera permission
 was granted. MediaPipe initialized on the Apple M4, and the preview process
-remained healthy. The terminal observed `monitoring: healthy -> waiting`,
-meaning the camera/model loop was running but did not have a confident
-single-person pose at that moment.
+remained healthy. After accepting slightly out-of-frame landmark coordinates,
+the live loop alternated between `waiting` and `healthy` without crashing,
+confirming that pose inference and the complete posture pipeline were active.
 
 ## Verified
 
-- 67 automated tests pass.
+- 74 automated tests pass.
 - Ruff reports no lint errors.
 - Deterministic demo produces head, shoulder, torso, recovery, absence, and
   return-to-monitoring transitions.
 - MediaPipe model construction succeeds outside the restricted sandbox.
 - Camera permission and OpenCV capture initialization succeed.
+- The recommended macOS launcher denies all process network access while
+  preserving camera and Metal inference.
 - Camera, pose backend, and preview resources close through context managers.
 - Static privacy enforcement finds no frame-writing or server-listener APIs.
 - The downloaded pose model is local and excluded from Git.
@@ -46,7 +48,7 @@ single-person pose at that moment.
 ```bash
 uv sync --python 3.11 --extra dev
 uv run python scripts/fetch_pose_model.py
-uv run posturely \
+uv run python -m posturely.private_launch \
   --camera 0 \
   --model assets/models/pose_landmarker_lite.task
 ```

@@ -18,8 +18,6 @@ from posturely.core.types import (
 @pytest.mark.parametrize(
     ("field", "kwargs"),
     [
-        ("x", {"x": -0.01, "y": 0.5}),
-        ("y", {"x": 0.5, "y": 1.01}),
         ("visibility", {"x": 0.5, "y": 0.5, "visibility": 1.1}),
         ("presence", {"x": 0.5, "y": 0.5, "presence": -0.1}),
     ],
@@ -28,6 +26,40 @@ def test_landmark_rejects_values_outside_normalized_range(
     field: str, kwargs: dict[str, float]
 ) -> None:
     """Removing coordinate validation would admit invalid pose geometry."""
+    with pytest.raises(ValueError, match=field):
+        Landmark(**kwargs)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"x": 1.02, "y": 0.5},
+        {"x": -0.02, "y": 0.5},
+        {"x": 0.5, "y": 1.03},
+        {"x": 0.5, "y": -0.03},
+    ],
+)
+def test_landmark_accepts_finite_coordinates_just_outside_frame(
+    kwargs: dict[str, float],
+) -> None:
+    """MediaPipe may place partially visible joints just beyond image bounds."""
+    Landmark(**kwargs)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("x", float("inf")),
+        ("x", float("nan")),
+        ("y", float("-inf")),
+        ("z", float("nan")),
+    ],
+)
+def test_landmark_rejects_non_finite_coordinates(field: str, value: float) -> None:
+    """Non-finite coordinates would poison every downstream geometry calculation."""
+    kwargs = {"x": 0.5, "y": 0.5}
+    kwargs[field] = value
+
     with pytest.raises(ValueError, match=field):
         Landmark(**kwargs)
 

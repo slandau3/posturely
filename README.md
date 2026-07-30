@@ -31,7 +31,7 @@ Requirements: macOS on Apple silicon, Python 3.11, and
 ```bash
 uv sync --python 3.11 --extra dev
 uv run python scripts/fetch_pose_model.py
-uv run posturely \
+uv run python -m posturely.private_launch \
   --camera 0 \
   --model assets/models/pose_landmarker_lite.task
 ```
@@ -40,6 +40,13 @@ On first launch, grant Camera access to the terminal or desktop app running
 Posturely. Press `q` or Escape in the preview window to quit.
 
 If camera index `0` is not the desired webcam, try `--camera 1`.
+
+Google's current MediaPipe Tasks privacy notice says the library sends API
+performance and utilization metrics (not input images) to Google. The macOS
+`private_launch` command above runs Posturely inside an operating-system
+sandbox with `(deny network*)`, preventing those metrics—or any other outbound
+traffic—from leaving the process. Do not replace that command with a raw
+`posturely` launch if you require zero network access.
 
 ## Run without a camera
 

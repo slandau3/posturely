@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from math import isfinite
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,7 +17,11 @@ class Landmark:
     presence: float = 1.0
 
     def __post_init__(self) -> None:
-        for field_name in ("x", "y", "visibility", "presence"):
+        for field_name in ("x", "y", "z"):
+            value = getattr(self, field_name)
+            if not isfinite(value):
+                raise ValueError(f"{field_name} must be finite, got {value}")
+        for field_name in ("visibility", "presence"):
             value = getattr(self, field_name)
             if not 0.0 <= value <= 1.0:
                 raise ValueError(f"{field_name} must be between 0 and 1, got {value}")
