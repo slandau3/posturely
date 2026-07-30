@@ -63,6 +63,21 @@ class PostureFeatures:
     torso: TorsoFeatures | None
 
 
+@dataclass(frozen=True, slots=True)
+class Evidence:
+    problematic: bool
+    confident: bool
+    magnitude: float
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
+class PostureEvidence:
+    head: Evidence
+    shoulders: Evidence
+    torso: Evidence
+
+
 class DiagnosticColor(str, Enum):
     OFF = "off"
     AMBER = "amber"
