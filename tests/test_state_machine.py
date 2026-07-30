@@ -112,10 +112,68 @@ def test_uncertainty_suppresses_and_resets_alerts() -> None:
 
     clock.now = 17.0
     state = machine.update(evidence(head=True, confident=False), pose_present=True)
+    assert state.head is DiagnosticColor.RED
+
+    clock.now = 18.01
+    state = machine.update(evidence(head=True, confident=False), pose_present=True)
     assert state.head is DiagnosticColor.OFF
 
     clock.now = 20.0
     assert machine.update(evidence(head=True), pose_present=True).head is DiagnosticColor.OFF
+
+
+def test_brief_pose_loss_pauses_instead_of_resetting_issue_timer() -> None:
+    """One dropped pose result must not prevent a sustained issue from alerting."""
+    clock = FakeClock()
+    machine = PostureStateMachine(clock=clock)
+    machine.update(evidence(head=True), pose_present=True)
+
+    clock.now = 4.0
+    state = machine.update(evidence(head=True), pose_present=False)
+    assert state.monitoring is MonitoringState.HEALTHY
+    clock.now = 4.5
+    assert machine.update(evidence(head=True), pose_present=True).head is DiagnosticColor.OFF
+    clock.now = 5.0
+    assert machine.update(evidence(head=True), pose_present=True).head is DiagnosticColor.OFF
+    clock.now = 5.5
+    assert machine.update(evidence(head=True), pose_present=True).head is DiagnosticColor.AMBER
+
+
+def test_brief_metric_uncertainty_pauses_instead_of_resetting_issue_timer() -> None:
+    """A momentarily hidden ear must not erase otherwise continuous head evidence."""
+    clock = FakeClock()
+    machine = PostureStateMachine(clock=clock)
+    machine.update(evidence(head=True), pose_present=True)
+
+    clock.now = 4.0
+    machine.update(evidence(head=True, confident=False), pose_present=True)
+    clock.now = 4.5
+    machine.update(evidence(head=True), pose_present=True)
+    clock.now = 5.0
+    assert machine.update(evidence(head=True), pose_present=True).head is DiagnosticColor.OFF
+    clock.now = 5.5
+    assert machine.update(evidence(head=True), pose_present=True).head is DiagnosticColor.AMBER
+
+
+def test_long_pose_loss_resets_timers_and_reports_waiting() -> None:
+    """A real absence must not preserve accumulated bad-posture time."""
+    clock = FakeClock()
+    machine = PostureStateMachine(clock=clock)
+    machine.update(evidence(head=True), pose_present=True)
+
+    clock.now = 4.0
+    machine.update(evidence(head=True), pose_present=False)
+    clock.now = 5.01
+    state = machine.update(evidence(head=True), pose_present=False)
+    assert state.monitoring is MonitoringState.WAITING
+    assert state.head is DiagnosticColor.OFF
+
+    clock.now = 5.1
+    machine.update(evidence(head=True), pose_present=True)
+    clock.now = 10.09
+    assert machine.update(evidence(head=True), pose_present=True).head is DiagnosticColor.OFF
+    clock.now = 10.1
+    assert machine.update(evidence(head=True), pose_present=True).head is DiagnosticColor.AMBER
 
 
 @pytest.mark.parametrize(

@@ -33,6 +33,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=70.0,
         help="length of the synthetic demo timeline",
     )
+    parser.add_argument(
+        "--demo-speed",
+        type=float,
+        default=10.0,
+        help="visual demo playback speed (default: 10x)",
+    )
     return parser
 
 
@@ -62,11 +68,28 @@ def main(
     sleep: Callable[[float], None] = _real_sleep,
     out: TextIO | None = None,
     live: Callable[[argparse.Namespace], int] | None = None,
+    visual_demo: Callable[[argparse.Namespace], int] | None = None,
 ) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.demo:
-        return _run_demo(args.demo_seconds, clock=clock, sleep=sleep, out=out or sys.stdout)
+        if args.no_preview:
+            return _run_demo(
+                args.demo_seconds,
+                clock=clock,
+                sleep=sleep,
+                out=out or sys.stdout,
+            )
+        if visual_demo is not None:
+            return visual_demo(args)
+        from posturely.demo_ui import run_visual_demo
+
+        return run_visual_demo(
+            seconds=args.demo_seconds,
+            speed=args.demo_speed,
+            mirror=args.mirror,
+            out=out or sys.stdout,
+        )
     if not args.model:
         parser.error("--model is required for live camera monitoring")
     if not Path(args.model).is_file():

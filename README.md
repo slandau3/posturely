@@ -50,8 +50,18 @@ traffic—from leaving the process. Do not replace that command with a raw
 
 ## Run without a camera
 
-The deterministic demo exercises all three alert timers and the
-absence/recovery state without OpenCV or MediaPipe:
+Open an accelerated visual simulation of the finished appliance:
+
+```bash
+uv run posturely --demo
+```
+
+It uses the real posture engine with a synthetic person, automatically cycles
+the head, shoulder, and torso lights through amber and red, then demonstrates
+absence/recovery. It runs at 10x speed, takes about seven seconds, and never
+opens the camera. Press `q` or Escape to quit early.
+
+For text-only output without an OpenCV window:
 
 ```bash
 uv run posturely --demo --no-preview --demo-seconds 70
@@ -74,7 +84,8 @@ requests a camera.
 `src/posturely/core/` contains the portable geometry, evaluator, alert timing,
 and numeric calibration logic. It imports neither OpenCV nor MediaPipe.
 `src/posturely/adapters/` owns replaceable Mac camera, pose, and preview
-integration. `src/posturely/live.py` wires the pieces together.
+integration. `src/posturely/live.py` wires the camera path together, while
+`src/posturely/demo_ui.py` drives the same engine without a camera.
 
 The same core is intended to transfer to a low-cost Raspberry Pi appliance
 with three tiny physical LEDs and no display.

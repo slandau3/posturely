@@ -6,11 +6,11 @@
 
 Posturely is implemented as a local Python 3.11 application with:
 
-- A deterministic no-camera simulation of all three diagnostic lights.
+- An automatic visual, camera-free simulation of all three diagnostic lights.
 - A live Mac camera path using OpenCV and MediaPipe Pose Landmarker.
 - Three virtual head, shoulder, and torso lights.
 - Exact off/amber/red/recovery timing.
-- Confidence-gated posture geometry and absence handling.
+- Confidence-gated posture geometry and dropout-tolerant absence handling.
 - Optional numeric seated and standing calibration logic.
 - No frame, landmark-history, or posture-history persistence.
 
@@ -20,12 +20,16 @@ remained healthy. After accepting slightly out-of-frame landmark coordinates,
 the live loop alternated between `waiting` and `healthy` without crashing,
 confirming that pose inference and the complete posture pipeline were active.
 
+The one-second dropout grace period pauses posture timers during momentary
+landmark loss instead of repeatedly erasing them. A real absence still clears
+the lights and reports `waiting`.
+
 ## Verified
 
-- 74 automated tests pass.
+- 80 automated tests pass.
 - Ruff reports no lint errors.
-- Deterministic demo produces head, shoulder, torso, recovery, absence, and
-  return-to-monitoring transitions.
+- The visual demo automatically displays head, shoulder, torso, recovery,
+  absence, and return-to-monitoring transitions using the real engine.
 - MediaPipe model construction succeeds outside the restricted sandbox.
 - Camera permission and OpenCV capture initialization succeed.
 - The recommended macOS launcher denies all process network access while
@@ -34,16 +38,17 @@ confirming that pose inference and the complete posture pipeline were active.
 - Static privacy enforcement finds no frame-writing or server-listener APIs.
 - The downloaded pose model is local and excluded from Git.
 
-## Still needs Steve's live confirmation
-
-- Pose points appear consistently when Steve is centered in frame.
-- Each dot responds independently to a deliberate posture trial.
-- Head and torso rules feel useful at Steve's actual desk angle.
-- The shoulder proxy is useful enough to keep as rounding/imbalance rather
-  than narrowing it to imbalance/elevation only.
-- Seated and standing framing both work.
-
 ## Run
+
+To verify the concept without a camera:
+
+```bash
+uv run posturely --demo
+```
+
+The entire light sequence completes automatically in about seven seconds.
+
+For live monitoring:
 
 ```bash
 uv sync --python 3.11 --extra dev

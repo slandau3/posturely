@@ -30,6 +30,7 @@ def test_parser_exposes_runtime_modes() -> None:
         "--mirror",
         "--no-preview",
         "--demo-seconds",
+        "--demo-speed",
     ):
         assert flag in help_text
 
@@ -61,3 +62,23 @@ def test_headless_demo_runs_full_script_without_native_libraries() -> None:
         assert line in text
     assert "cv2" not in sys.modules
     assert "mediapipe" not in sys.modules
+
+
+def test_visual_demo_is_the_default_demo_experience() -> None:
+    """Plain `--demo` must open the visual appliance simulation."""
+    received = None
+
+    def visual_demo(args: object) -> int:
+        nonlocal received
+        received = args
+        return 23
+
+    exit_code = main(
+        ["--demo", "--demo-seconds", "12", "--demo-speed", "8"],
+        visual_demo=visual_demo,
+    )
+
+    assert exit_code == 23
+    assert received is not None
+    assert received.demo_seconds == 12
+    assert received.demo_speed == 8

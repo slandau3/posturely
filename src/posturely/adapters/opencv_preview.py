@@ -43,6 +43,7 @@ class OpenCVPreview:
         state: OutputState,
         fps: float,
         mirror: bool,
+        status_text: str | None = None,
     ) -> int:
         cv2 = self._cv2
         canvas = cv2.flip(frame, 1) if mirror else frame
@@ -77,6 +78,17 @@ class OpenCVPreview:
             1,
             cv2.LINE_AA,
         )
+        if status_text:
+            cv2.putText(
+                canvas,
+                status_text,
+                (width // 2 - 145, height - 20),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.45,
+                (180, 180, 180),
+                1,
+                cv2.LINE_AA,
+            )
         cv2.imshow(self.WINDOW_NAME, canvas)
         return cv2.waitKey(1) & 0xFF
 
